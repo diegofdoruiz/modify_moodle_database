@@ -211,7 +211,38 @@ $BODY$
 LANGUAGE plpgsql;
 
 
-
+--update quices_attempts table
+CREATE OR REPLACE FUNCTION updateQuicesAttempts() 
+RETURNS void AS $BODY$
+DECLARE
+	attempt mdl_quiz_attempts%rowtype;
+	fractions_sum numeric DEFAULT 0;
+BEGIN
+    FOR attempt IN
+        SELECT * 
+		FROM mdl_quiz_attempts
+		--WHERE id = 698785
+		ORDER BY id ASC
+		--LIMIT 10
+    LOOP
+		SELECT round(SUM(qas.fraction), 2) INTO fractions_sum
+		FROM mdl_quiz_attempts quiza
+		JOIN mdl_question_usages qu ON qu.id = quiza.uniqueid
+		JOIN mdl_question_attempts qa ON qa.questionusageid = qu.id
+		JOIN mdl_question_attempt_steps qas ON qas.questionattemptid = qa.id
+		LEFT JOIN mdl_question_attempt_step_data qasd ON qasd.attemptstepid = qas.id
+		WHERE quiza.id = attempt.id AND qasd.name = '-finish' AND quiza.state = 'finished';
+		--RAISE NOTICE 'Grade = %', fractions_sum;
+		
+		UPDATE mdl_quiz_attempts
+		SET sumgrades = fractions_sum
+		WHERE id = attempt.id;
+		
+    END LOOP;
+    RETURN;
+END;
+$BODY$
+LANGUAGE plpgsql;
 
 
 --update questionnaires table
@@ -600,6 +631,10 @@ DO $$ BEGIN
 END $$;
 
 DO $$ BEGIN
+    PERFORM updateQuicesAttempts();
+END $$;
+
+DO $$ BEGIN
     PERFORM updateQuestionnaires();
 END $$;
 
@@ -659,6 +694,7 @@ DROP FUNCTION IF EXISTS updateUsers();
 DROP FUNCTION IF EXISTS updateAssigns();
 DROP FUNCTION IF EXISTS updateQuices();
 DROP FUNCTION IF EXISTS updateQuicesAttemptsSteps();
+DROP FUNCTION IF EXISTS updateQuicesAttempts();
 DROP FUNCTION IF EXISTS updateQuestionnaires();
 DROP FUNCTION IF EXISTS updateQuestionsCategories();
 DROP FUNCTION IF EXISTS updateQuestionsQuestionnaires();
