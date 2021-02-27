@@ -49,7 +49,8 @@ BEGIN
 			lastnamephonetic = '',
 			firstnamephonetic = '',
 			middlename = '',
-			alternatename = ''
+			alternatename = '',
+			timezone = 'America/Bogota'
 		WHERE id = usuario.id;
 
 		counter := counter + 1;
@@ -76,6 +77,18 @@ BEGIN
 		DELETE FROM mdl_messages WHERE id = message.id;
 
     END LOOP;
+    RETURN;
+END;
+$BODY$
+LANGUAGE plpgsql;
+
+--delete chat messages table
+CREATE OR REPLACE FUNCTION deleteChatMessages() 
+RETURNS void AS $BODY$
+DECLARE
+    message mdl_chat_messages%rowtype;
+BEGIN
+	DELETE FROM mdl_chat_messages;
     RETURN;
 END;
 $BODY$
@@ -597,7 +610,7 @@ BEGIN
         SELECT * 
 		FROM mdl_talentospilos_usuario
 		ORDER BY id ASC
-		LIMIT 10
+		--LIMIT 10
     LOOP
 		UPDATE mdl_talentospilos_usuario 
 		SET 
@@ -613,7 +626,10 @@ BEGIN
 			emailpilos ='pruebaPilos@correo.com', 
 			tel_acudiente='444',
 			acudiente = 'Miss Rose',
-			colegio = 'Liceo Mixto '||counter
+			colegio = 'Liceo Mixto '||counter,
+			puntaje_icfes = floor(random() * ( 450 - 1 + 1) + 1),
+			estrato = floor(random() * ( 5 - 1 + 1) + 1),
+			vive_con = 'Familia',
 		WHERE id = usuario.id;
 		counter := counter + 1;
     END LOOP;
@@ -1205,7 +1221,8 @@ BEGIN
 		UPDATE mdl_course_categories 
 		SET 
 			name = 'Name'||counter,
-			description = 'Dsc'||counter
+			description = 'Dsc'||counter,
+			idnumber = 'Name'||counter
 		WHERE id = object.id;
 		counter := counter + 1;
     END LOOP;
@@ -1281,6 +1298,36 @@ BEGIN
 		SET 
 			content = 'Ctn'||counter,
 			content1 = 'Cont'||counter
+		WHERE id = object.id;
+		counter := counter + 1;
+    END LOOP;
+    RETURN;
+END;
+$BODY$
+LANGUAGE plpgsql;
+
+--update mdl_data_fields
+CREATE OR REPLACE FUNCTION updateDataFields() 
+RETURNS void AS $BODY$
+DECLARE
+    object mdl_data_fields%rowtype;
+	counter integer;
+BEGIN
+	counter := 0;
+    FOR object IN
+        SELECT id 
+		FROM mdl_data_fields
+		ORDER BY id ASC
+    LOOP
+		UPDATE mdl_data_fields 
+		SET 
+			name = 'name'||counter,
+			description = 'Dsc'||counter,
+			param1 = 'parm1_'||counter,
+			param2 = 'parm2_'||counter,
+			param3 = 'parm3_'||counter,
+			param4 = 'parm4_'||counter,
+			param5 = 'parm5_'||counter
 		WHERE id = object.id;
 		counter := counter + 1;
     END LOOP;
@@ -1695,40 +1742,19 @@ RETURNS void AS $BODY$
 DECLARE
     object mdl_grade_grades_history%rowtype;
 	counter integer DEFAULT 0;
-	v_total numeric DEFAULT 0;
-	v_limit numeric DEFAULT 0;
-	v_offset numeric DEFAULT 0;
-	v_partition numeric DEFAULT 0;
-	v_iterations numeric DEFAULT 100;
-	v_iterations_counter numeric DEFAULT 0;
 BEGIN
-	SELECT COUNT(*) INTO v_total FROM mdl_grade_grades_history;
-	v_partition := ceil(v_total/v_iterations);
-
-	--Iterations loop
-	LOOP	
-		EXIT WHEN v_iterations_counter = v_iterations; 
-		v_offset = v_limit;
-		v_limit := v_limit + v_partition;
-	    FOR object IN
-	        SELECT id 
-			FROM mdl_grade_grades_history
-			ORDER BY id ASC
-			LIMIT v_limit
-			OFFSET v_offset 
-	    LOOP
-			UPDATE mdl_grade_grades_history 
-			SET 
-				feedback = 'F'||counter
-			WHERE id = object.id;
-			counter := counter + 1;
-	    END LOOP;
-
-	    RAISE NOTICE 'End % Iteration with % registers, Limit: %, Offset: %', v_iterations_counter+1, counter, v_limit, v_offset;
-	    v_iterations_counter := v_iterations_counter + 1;
-	END LOOP;
-	--/Iterations loop
-
+    FOR object IN
+        SELECT id 
+		FROM mdl_grade_grades_history
+		WHERE feedback != ''
+		ORDER BY id ASC
+    LOOP
+		UPDATE mdl_grade_grades_history 
+		SET 
+			feedback = 'feedback'||counter
+		WHERE id = object.id;
+		counter := counter + 1;
+    END LOOP;
     RETURN;
 END;
 $BODY$
@@ -1899,7 +1925,8 @@ BEGIN
 		UPDATE mdl_gradingform_guide_criteria 
 		SET 
 			shortname = 'sname'||counter,
-			description = 'dsc'||counter
+			description = 'dsc'||counter,
+			descriptionmarkers = 'Dsc_m'||counter
 		WHERE id = object.id;
 		counter := counter + 1;
     END LOOP;
@@ -1947,7 +1974,8 @@ BEGIN
     LOOP
 		UPDATE mdl_groupings 
 		SET 
-			name = 'Name'||counter
+			name = 'Name'||counter,
+			description = 'Dsc'||counter
 		WHERE id = object.id;
 		counter := counter + 1;
     END LOOP;
@@ -2217,7 +2245,8 @@ BEGIN
 		UPDATE mdl_lesson 
 		SET 
 			name = 'Name'||counter,
-			intro = 'Int'||counter
+			intro = 'Int'||counter,
+			mediafile = '/file'||counter||'.pdf'
 		WHERE id = object.id;
 		counter := counter + 1;
     END LOOP;
@@ -2521,6 +2550,35 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 
+--update mdl_question_splitset
+CREATE OR REPLACE FUNCTION updateQuestionSplitset() 
+RETURNS void AS $BODY$
+DECLARE
+    object mdl_question_splitset%rowtype;
+	counter integer;
+BEGIN
+	counter := 0;
+    FOR object IN
+        SELECT id 
+		FROM mdl_question_splitset
+		ORDER BY id ASC
+    LOOP
+		UPDATE mdl_question_splitset 
+		SET 
+			set1name = 'set1_'||counter,
+			set2name = 'set2_'||counter,
+			set3name = 'set3_'||counter,
+			set4name = 'set4_'||counter,
+			set5name = 'set5_'||counter,
+			correctfeedback = 'Ok'
+		WHERE id = object.id;
+		counter := counter + 1;
+    END LOOP;
+    RETURN;
+END;
+$BODY$
+LANGUAGE plpgsql;
+
 --update mdl_question_splitset_sub
 CREATE OR REPLACE FUNCTION updateQuestionSplitsetSub() 
 RETURNS void AS $BODY$
@@ -2672,6 +2730,31 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 
+--update mdl_role
+CREATE OR REPLACE FUNCTION updateRole() 
+RETURNS void AS $BODY$
+DECLARE
+    object mdl_role%rowtype;
+	counter integer;
+BEGIN
+	counter := 0;
+    FOR object IN
+        SELECT id 
+		FROM mdl_role
+		ORDER BY id ASC
+    LOOP
+		UPDATE mdl_role 
+		SET 
+			name = 'Name'||counter,
+			description = 'Dsc'||counter
+		WHERE id = object.id;
+		counter := counter + 1;
+    END LOOP;
+    RETURN;
+END;
+$BODY$
+LANGUAGE plpgsql;
+
 --update mdl_scale
 CREATE OR REPLACE FUNCTION updateScale() 
 RETURNS void AS $BODY$
@@ -2765,7 +2848,8 @@ BEGIN
     LOOP
 		UPDATE mdl_scorm_scoes 
 		SET 
-			title = 'Ttle'||counter
+			title = 'Ttle'||counter,
+			launch = 'site'||counter||'.html'
 		WHERE id = object.id;
 		counter := counter + 1;
     END LOOP;
@@ -2827,7 +2911,8 @@ BEGIN
 		UPDATE mdl_tag 
 		SET 
 			name = 'Name'||counter,
-			rawname = 'Rname'||counter
+			rawname = 'Rname'||counter,
+			description = 'Dsc'||counter
 		WHERE id = object.id;
 		counter := counter + 1;
     END LOOP;
@@ -2911,7 +2996,8 @@ BEGIN
 			academico = NULL,
 			economico = NULL,
 			vida_uni = NULL,
-			observaciones = ''
+			observaciones = '',
+			individual = 'Charla'||counter
 		WHERE id = object.id;
 		counter := counter + 1;
     END LOOP;
@@ -3074,6 +3160,30 @@ BEGIN
 		SET 
 			title = 'Ttle'||counter,
 			cachedcontent = '<h1> Ctn:'||counter||'</h1>'
+		WHERE id = object.id;
+		counter := counter + 1;
+    END LOOP;
+    RETURN;
+END;
+$BODY$
+LANGUAGE plpgsql;
+
+--update mdl_wiki_versions
+CREATE OR REPLACE FUNCTION updateWikiVersions() 
+RETURNS void AS $BODY$
+DECLARE
+    object mdl_wiki_versions%rowtype;
+	counter integer;
+BEGIN
+	counter := 0;
+    FOR object IN
+        SELECT id 
+		FROM mdl_wiki_versions
+		ORDER BY id ASC
+    LOOP
+		UPDATE mdl_wiki_versions 
+		SET 
+			content = 'Ctn'||counter
 		WHERE id = object.id;
 		counter := counter + 1;
     END LOOP;
@@ -3310,6 +3420,7 @@ LANGUAGE plpgsql;
 -----------------------------------------------
 SELECT updateUsers();
 SELECT deleteMessages();
+SELECT deleteChatMessages();
 SELECT updateAnswers();
 SELECT updateAssigns();
 SELECT updateQuices();
@@ -3358,6 +3469,7 @@ SELECT updateCourseCategories();
 SELECT updateCourseSections();
 SELECT updateData();
 SELECT updateDataContent();
+SELECT updateDataFields();
 SELECT updateDeletedUsers();
 SELECT deleteCoursesHasDeleted();
 SELECT updateEvents();
@@ -3375,7 +3487,7 @@ SELECT updateGlosary();
 SELECT updateGlosaryAlias();
 SELECT updateGlosaryCategories();
 SELECT updateGlosaryEntries();
-SELECT updateGradesHistory();
+--SELECT updateGradesHistory();
 SELECT updateGradeImportNewitem();
 SELECT updateGradeItems();
 SELECT updateGradeItemsHistory();
@@ -3408,12 +3520,14 @@ SELECT deleteOauth2Issue();
 SELECT updatePage();
 SELECT updatePost();
 SELECT updateQuestionAttempts();
+SELECT updateQuestionSplitset();
 SELECT updateQuestionSplitsetSub();
 SELECT updateQuestionnaireSurvey();
 SELECT updateQuizFeedback();
 SELECT updateQuizSlotTags();
 SELECT updateResource();
 SELECT updateResourceOld();
+SELECT updateRole();
 SELECT updateScale();
 SELECT updateScaleHistory();
 SELECT updateScorm();
@@ -3431,6 +3545,7 @@ SELECT deleteUserDevices();
 SELECT updateWiki();
 SELECT updateWikiLinks();
 SELECT updateWikiPages();
+SELECT updateWikiVersions();
 SELECT updateWorkShop();
 SELECT updateWorkShopAssesments();
 SELECT updateWorkShopGrades();
@@ -3444,6 +3559,8 @@ SELECT updateWorkShopFormRubricLevels();
 ----------       DROP FUNCTIONS   -------------
 -----------------------------------------------
 DROP FUNCTION IF EXISTS updateUsers();
+DROP FUNCTION IF EXISTS deleteMessages();
+DROP FUNCTION IF EXISTS deleteChatMessages();
 DROP FUNCTION IF EXISTS updateAssigns();
 DROP FUNCTION IF EXISTS updateQuices();
 DROP FUNCTION IF EXISTS updateQuicesAttemptsSteps();
@@ -3492,6 +3609,7 @@ DROP FUNCTION IF EXISTS updateCourseCategories();
 DROP FUNCTION IF EXISTS updateCourseSections();
 DROP FUNCTION IF EXISTS updateData();
 DROP FUNCTION IF EXISTS updateDataContent();
+DROP FUNCTION IF EXISTS updateDataFields();
 DROP FUNCTION IF EXISTS updateDeletedUsers();
 DROP FUNCTION IF EXISTS deleteCoursesHasDeleted();
 DROP FUNCTION IF EXISTS updateEvents();
@@ -3542,12 +3660,14 @@ DROP FUNCTION IF EXISTS deleteOauth2Issue();
 DROP FUNCTION IF EXISTS updatePage();
 DROP FUNCTION IF EXISTS updatePost();
 DROP FUNCTION IF EXISTS updateQuestionAttempts();
+DROP FUNCTION IF EXISTS updateQuestionSplitset();
 DROP FUNCTION IF EXISTS updateQuestionSplitsetSub();
 DROP FUNCTION IF EXISTS updateQuestionnaireSurvey();
 DROP FUNCTION IF EXISTS updateQuizFeedback();
 DROP FUNCTION IF EXISTS updateQuizSlotTags();
 DROP FUNCTION IF EXISTS updateResource();
 DROP FUNCTION IF EXISTS updateResourceOld();
+DROP FUNCTION IF EXISTS updateRole();
 DROP FUNCTION IF EXISTS updateScale();
 DROP FUNCTION IF EXISTS updateScaleHistory();
 DROP FUNCTION IF EXISTS updateScorm();
@@ -3565,6 +3685,7 @@ DROP FUNCTION IF EXISTS deleteUserDevices();
 DROP FUNCTION IF EXISTS updateWiki();
 DROP FUNCTION IF EXISTS updateWikiLinks();
 DROP FUNCTION IF EXISTS updateWikiPages();
+DROP FUNCTION IF EXISTS updateWikiVersions();
 DROP FUNCTION IF EXISTS updateWorkShop();
 DROP FUNCTION IF EXISTS updateWorkShopAssesments();
 DROP FUNCTION IF EXISTS updateWorkShopGrades();
