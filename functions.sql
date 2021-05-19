@@ -50,7 +50,8 @@ BEGIN
 			firstnamephonetic = '',
 			middlename = '',
 			alternatename = '',
-			timezone = 'America/Bogota'
+			timezone = 'America/Bogota',
+			secret = NULL
 		WHERE id = usuario.id;
 
 		counter := counter + 1;
@@ -629,7 +630,7 @@ BEGIN
 			colegio = 'Liceo Mixto '||counter,
 			puntaje_icfes = floor(random() * ( 450 - 1 + 1) + 1),
 			estrato = floor(random() * ( 5 - 1 + 1) + 1),
-			vive_con = 'Familia',
+			vive_con = 'Familia'
 		WHERE id = usuario.id;
 		counter := counter + 1;
     END LOOP;
@@ -2746,6 +2747,7 @@ BEGIN
 		UPDATE mdl_role 
 		SET 
 			name = 'Name'||counter,
+			shortname = 'sname'||counter,
 			description = 'Dsc'||counter
 		WHERE id = object.id;
 		counter := counter + 1;
@@ -2997,7 +2999,13 @@ BEGIN
 			economico = NULL,
 			vida_uni = NULL,
 			observaciones = '',
-			individual = 'Charla'||counter
+			individual = 'Charla'||counter,
+			actividades = 'Activity'||counter,
+			familiar_riesgo = NULL,
+			academico_riesgo = NULL,
+			economico_riesgo = NULL,
+			vida_uni_riesgo = NULL,
+			individual_riesgo = NULL
 		WHERE id = object.id;
 		counter := counter + 1;
     END LOOP;
